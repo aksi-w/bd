@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-
+#таблица покупателя
 class Person(Base):
     __tablename__ = 'person'
 
@@ -19,7 +19,7 @@ class Person(Base):
     orders = relationship('Order', back_populates='person')
     carts = relationship('Cart', back_populates='person')
 
-
+#таблица заказа
 class Order(Base):
     __tablename__ = 'order'
 
@@ -33,7 +33,7 @@ class Order(Base):
     person = relationship('Person', back_populates='orders')
     order_items = relationship('OrderProduct', back_populates='order')
 
-
+#таблица товара
 class Product(Base):
     __tablename__ = 'product'
 
@@ -46,19 +46,19 @@ class Product(Base):
     order_items = relationship('OrderProduct', back_populates='product')
     cart_items = relationship('CartProduct', back_populates='product')
 
-
+#таблица товар в заказе
 class OrderProduct(Base):
     __tablename__ = 'order_product'
 
     OrderID = Column(Integer, ForeignKey('order.OrderID'), primary_key=True)
     ProductID = Column(Integer, ForeignKey('product.ProductID'), primary_key=True)
     quantity = Column(Integer)
-    price = Column(Float)  # Добавляем поле для сохранения цены товара на момент заказа
+    price = Column(Float)
 
     order = relationship('Order', back_populates='order_items')
     product = relationship('Product', back_populates='order_items')
 
-
+#таблица корзины
 class Cart(Base):
     __tablename__ = 'cart'
 
@@ -68,7 +68,7 @@ class Cart(Base):
     person = relationship('Person', back_populates='carts')
     cart_items = relationship('CartProduct', back_populates='cart')
 
-
+#таблица товар в корзине
 class CartProduct(Base):
     __tablename__ = 'cart_product'
 
