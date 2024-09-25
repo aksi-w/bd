@@ -4,9 +4,9 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
-#Таблица Клиентов
-class Client(Base):
-    __tablename__ = 'client'
+
+class Person(Base):
+    __tablename__ = 'person'
 
     PersonID = Column(Integer, primary_key=True)
     first_name = Column(String)
@@ -16,24 +16,24 @@ class Client(Base):
     phone = Column(String)
     email = Column(String)
 
-    orders = relationship('Order', back_populates='client')
-    carts = relationship('Cart', back_populates='client')
+    orders = relationship('Order', back_populates='person')
+    carts = relationship('Cart', back_populates='person')
 
-#Таблица заказа
+
 class Order(Base):
     __tablename__ = 'order'
 
     OrderID = Column(Integer, primary_key=True)
-    PersonID = Column(Integer, ForeignKey('client.PersonID'))
+    PersonID = Column(Integer, ForeignKey('person.PersonID'))
     order_date = Column(String)
     delivery_cost = Column(Float)
     payment_type = Column(String)
     status = Column(String)
 
-    client = relationship('Client', back_populates='orders')
+    person = relationship('Person', back_populates='orders')
     order_items = relationship('OrderProduct', back_populates='order')
 
-#Таблица товара
+
 class Product(Base):
     __tablename__ = 'product'
 
@@ -46,28 +46,29 @@ class Product(Base):
     order_items = relationship('OrderProduct', back_populates='product')
     cart_items = relationship('CartProduct', back_populates='product')
 
-#Таблица Товар в заказе
+
 class OrderProduct(Base):
     __tablename__ = 'order_product'
 
     OrderID = Column(Integer, ForeignKey('order.OrderID'), primary_key=True)
     ProductID = Column(Integer, ForeignKey('product.ProductID'), primary_key=True)
     quantity = Column(Integer)
+    price = Column(Float)  # Добавляем поле для сохранения цены товара на момент заказа
 
     order = relationship('Order', back_populates='order_items')
     product = relationship('Product', back_populates='order_items')
 
-#Таблица корзины
+
 class Cart(Base):
     __tablename__ = 'cart'
 
     CartID = Column(Integer, primary_key=True)
-    PersonID = Column(Integer, ForeignKey('client.PersonID'))
+    PersonID = Column(Integer, ForeignKey('person.PersonID'))
 
-    client = relationship('Client', back_populates='carts')
+    person = relationship('Person', back_populates='carts')
     cart_items = relationship('CartProduct', back_populates='cart')
 
-#Таблица товара в корзине
+
 class CartProduct(Base):
     __tablename__ = 'cart_product'
 
