@@ -92,6 +92,22 @@ def get_products():
                          "description": p.description} for p in products])
 
 
+@app.route('/products/<int:product_id>', methods=['GET'])
+def get_product_by_id(product_id):
+    with get_session() as session:
+        product = session.query(Product).get(product_id)
+        if not product:
+            return jsonify({"message": "Товар не найден"}), 404
+
+        return jsonify({
+            "ProductID": product.ProductID,
+            "name": product.name,
+            "price": product.price,
+            "weight": product.weight,
+            "description": product.description
+        })
+
+
 @app.route('/products', methods=['POST'])
 def add_product():
     data = request.json
