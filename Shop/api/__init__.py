@@ -214,10 +214,10 @@ def delete_cart(cart_id):
     with get_session() as session:
         cart = session.query(Cart).get(cart_id)
         if not cart:
-            return jsonify({"message": "Cart not found"}), 404
+            return jsonify({"message": "корзина не найдена"}), 404
         session.delete(cart)
         session.commit()
-        return jsonify({"message": "Данные о корзине не найдены"})
+        return jsonify({"message": "Ваша корзина пуста"})
 
 
 @app.route('/cart_products', methods=['GET'])
