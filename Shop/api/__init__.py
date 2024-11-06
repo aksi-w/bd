@@ -19,6 +19,24 @@ def get_persons():
               "phone": p.phone, "email": p.email} for p in persons])
 
 
+@app.route('/persons/<int:person_id>', methods=['GET'])
+def get_person_by_id(person_id):
+    with get_session() as session:
+        person = session.query(Person).get(person_id)
+        if not person:
+            return jsonify({"message": "Пользователь с такими данными не найден"}), 404
+
+        return jsonify({
+            "PersonID": person.PersonID,
+            "first_name": person.first_name,
+            "middle_name": person.middle_name,
+            "last_name": person.last_name,
+            "address": person.address,
+            "phone": person.phone,
+            "email": person.email
+        })
+
+
 @app.route('/persons', methods=['POST'])
 def add_person():
     data = request.json
