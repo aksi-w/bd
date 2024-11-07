@@ -63,7 +63,6 @@ def create_products(num_products=10):
         session.bulk_save_objects(products)
         session.commit()
 
-# Создание таблицы с заказами
 def create_orders(num_orders=10):
     orders = []
 
@@ -89,7 +88,6 @@ def create_orders(num_orders=10):
         session.bulk_save_objects(orders)
         session.commit()
 
-# Создание связей между заказами и продуктами
 def create_order_products(num_order_products=10):
     order_products = []
 
@@ -121,7 +119,6 @@ def create_order_products(num_order_products=10):
         session.bulk_save_objects(order_products)
         session.commit()
 
-# Создание корзин для пользователей
 def create_carts(num_carts=10):
     carts = []
 
@@ -135,7 +132,6 @@ def create_carts(num_carts=10):
         session.bulk_save_objects(carts)
         session.commit()
 
-# Создание связей между корзинами и продуктами
 def create_cart_products(num_cart_products=10):
     cart_products = []
 
@@ -162,7 +158,6 @@ def create_cart_products(num_cart_products=10):
         session.bulk_save_objects(cart_products)
         session.commit()
 
-# Генерация данных
 create_persons()
 create_products()
 create_orders()
