@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Корзина</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .cart-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .cart-table th, .cart-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .cart-table th {
+            background-color: #f2f2f2;
+        }
+        .cart-button, .logout-button {
+            margin-left: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .quantity-control {
+            display: flex;
+            align-items: center;
+        }
+        .quantity-control button {
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Корзина</h1>
+    <div>
+        {% if person %}
+        <form action="/logout" method="post" style="display:inline;">
+            <button type="submit" class="logout-button">Выйти</button>
+        </form>
+        <button class="cart-button" onclick="location.href='/'">Главная</button>
+        {% else %}
+        <button id="loginBtn">Войти</button>
+        <button class="cart-button" onclick="location.href='/'">Главная</button>
+        {% endif %}
+    </div>
+</header>
+<div class="container">
+    {% if cart_items %}
+    <table class="cart-table" id="cart-items">
+        <thead>
+        <tr>
+            <th>Товар</th>
+            <th>Количество</th>
+            <th>Общая цена</th>
+            <th>Действия</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for item in cart_items %}
+        <tr id="item-{{ item.ProductID }}">
+            <td>{{ item.name }}</td>
+            <td class="quantity-control">
+                <button onclick="changeQuantity({{ item.ProductID }}, -1)">-</button>
+                <span id="quantity-{{ item.ProductID }}">{{ item.quantity }}</span>
+                <button onclick="changeQuantity({{ item.ProductID }}, 1)">+</button>
+            </td>
+            <td id="total-price-{{ item.ProductID }}">{{ item.price }} руб.</td>
+            <td>
+                <button onclick="deleteFromCart({{ item.ProductID }})" class="btn btn-danger btn-sm">Удалить</button>
+            </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <button onclick="clearCart()" class="btn btn-warning" style="margin-top: 10px;">Очистить всю корзину</button>
+    {% else %}
+    <p>{{ message }}</p>
+    {% endif %}
+    {% if person %}
+    <button id="placeOrderBtn">Оформить заказ</button>
+    {% endif %}
+</div>
+
+<!-- Модальное окно для авторизации -->
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form action="/login" method="post">
+            <label for="first_name">Имя:</label>
+            <input type="text" id="first_name" name="first_name" required><br>
+            <label for="last_name">Фамилия:</label>
+            <input type="text" id="last_name" name="last_name" required><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+</div>
+
+<!-- Модальное окно для оформления заказа -->
+<div id="placeOrderModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="placeOrderForm">
+            <label for="delivery_cost">Стоимость доставки:</label>
+            <input type="number" id="delivery_cost" name="delivery_cost" step="0.01" required><br>
+            <label for="payment_type">Способ оплаты:</label>
+            <select id="payment_type" name="payment_type" required>
+                <option value="online">Онлайн</option>
+                <option value="cash">Наличные</option>
+            </select><br>
+            <button type="submit">Оформить заказ</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.close').forEach(button => {
+        button.addEventListener('click', () => {
+            button.closest('.modal').style.display = 'none';
+        });
+    });
+
+    document.getElementById('placeOrderBtn').addEventListener('click', () => {
+        document.getElementById('placeOrderModal').style.display = 'block';
+    });
+
+    async function deleteFromCart(productId) {
+        const response = await fetch(`/cart/${productId}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            document.getElementById(`item-${productId}`).remove();
+        } else {
+            alert('Ошибка при удалении товара');
+        }
+    }
+
+    async function clearCart() {
+        const response = await fetch('/cart/clear', {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            document.getElementById('cart-items').innerHTML = '';
+        } else {
+            alert('Ошибка при очистке корзины');
+        }
+    }
+
+    async function changeQuantity(productId, change) {
+        const quantityElement = document.getElementById(`quantity-${productId}`);
+        let currentQuantity = parseInt(quantityElement.textContent);
+        const newQuantity = currentQuantity + change;
+
+        if (newQuantity > 0) {
+            const response = await fetch('/cart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ ProductID: productId, quantity: newQuantity })
+            });
+
+            if (response.ok) {
+                quantityElement.textContent = newQuantity;
+                // Обновите общую цену для товара
+                const priceElement = document.getElementById(`total-price-${productId}`);
+                const unitPrice = parseFloat(priceElement.textContent.replace(' руб.', '')) / currentQuantity;
+                priceElement.textContent = (unitPrice * newQuantity).toFixed(2) + ' руб.';
+            } else {
+                alert('Ошибка при изменении количества товара');
+            }
+        }
+    }
+
+    document.getElementById('placeOrderForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const deliveryCost = document.getElementById('delivery_cost').value;
+        const paymentType = document.getElementById('payment_type').value;
+
+        const response = await fetch('/order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ delivery_cost: deliveryCost, payment_type: paymentType })
+        });
+
+        if (response.ok) {
+            alert('Заказ оформлен');
+            document.getElementById('placeOrderModal').style.display = 'none';
+        } else {
+            alert('Ошибка при оформлении заказа');
+        }
+    });
+</script>
+</body>
+</html>

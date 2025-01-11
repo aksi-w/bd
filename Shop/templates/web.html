@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интернет-магазин</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .products {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .product {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px;
+            background-color: white;
+            width: 30%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .product h2 {
+            margin-top: 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .cart-button, .logout-button, .admin-button {
+            margin-left: 10px;
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .pagination a {
+            margin: 0 5px;
+            text-decoration: none;
+            color: #333;
+        }
+        .pagination a.active {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        .toast {
+            visibility: hidden;
+            max-width: 50%;
+            margin: 0 auto;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Добро пожаловать в интернет-магазин</h1>
+    <div>
+        {% if person %}
+        <span>Привет, {{ person.first_name }}!</span>
+        <form action="/logout" method="post" style="display:inline;">
+            <input type="hidden" name="_method" value="POST">
+            <button type="submit" class="logout-button">Выйти</button>
+        </form>
+        <button class="cart-button" onclick="location.href='/cart/{{ person.PersonID }}'">Корзина</button>
+        <button class="admin-button" onclick="location.href='/admin'">Админка</button>
+        {% else %}
+        <button id="loginBtn">Войти</button>
+        <button class="cart-button" onclick="location.href='/cart/1'">Корзина</button>
+        {% endif %}
+    </div>
+</header>
+<div class="container">
+    <div class="products" id="products">
+        {% for product in products %}
+        <div class="product">
+            <h2>{{ product.name }}</h2>
+            <p>{{ product.description }}</p>
+            <p>Цена: {{ product.price }} руб.</p>
+            <button onclick="addToCart({{ product.ProductID }})">Добавить в корзину</button>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="pagination">
+        {% for i in range(1, pages + 1) %}
+        <a href="?page={{ i }}" class="{% if i == page %}active{% endif %}">{{ i }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="loginModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form action="/login" method="post">
+            <label for="last_name">Фамилия:</label>
+            <input type="text" id="last_name" name="last_name" required><br>
+            <label for="first_name">Имя:</label>
+            <input type="text" id="first_name" name="first_name" required><br>
+            <label for="middle_name">Отчество:</label>
+            <input type="text" id="middle_name" name="middle_name"><br>
+            <label for="address">Адрес:</label>
+            <input type="text" id="address" name="address" required><br>
+            <label for="phone">Телефон:</label>
+            <input type="text" id="phone" name="phone" required><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+            <button type="submit">Войти</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    document.getElementById('loginBtn').onclick = function() {
+        document.getElementById('loginModal').style.display = "block";
+    }
+
+    document.getElementsByClassName('close')[0].onclick = function() {
+        document.getElementById('loginModal').style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('loginModal')) {
+            document.getElementById('loginModal').style.display = "none";
+        }
+    }
+
+    async function addToCart(productId) {
+        const toast = document.getElementById('toast');
+        const response = await fetch('/cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ PersonID: {{ person.PersonID if person else 1 }}, ProductID: productId, quantity: 1 })
+        });
+        if (response.ok) {
+            toast.textContent = 'Товар добавлен в корзину';
+        } else {
+            toast.textContent = 'Ошибка добавления товара в корзину';
+        }
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+</script>
+</body>
+</html>

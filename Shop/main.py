@@ -1,170 +1,61 @@
 from Shop.api import app
-from db import get_session
-from models import Person, Order, Product, OrderProduct, Cart, CartProduct
-import random
+from Shop.db import get_session
+from Shop.models import Product
 
-first_names = ["Полина", "Мария", "Дарья", "Наталья", "Александра", "Ольга", "Диана", "Елена", "Альбина", "Юлия"]
-middle_names = ["Алексеевна", "Ивановна", "Сергеевна", "Петровна", "Васильевна", "Андреевна", "Михайловна", "Федоровна"]
-last_names = ["Пушкина", "Петрова", "Сидорова", "Смирнова", "Кузнецова", "Попова", "Васильева", "Павлова", "Соколова", "Морозова"]
-streets = ["Ленина", "Проспект революции", "Гагарина", "Ломоносова", "Лермонтова", "Чехова", "Воли", "Зеленая", "Олимпийская"]
-
-def generate_phone():
-    return f"+7-{random.randint(900, 999)}-{random.randint(100, 999)}-{random.randint(10, 99)}-{random.randint(10, 99)}"
-
-def generate_email(first_name, last_name):
-    domains = ["mail.com", "yahoo.com", "gmail.com"]
-    return f"{first_name.lower()}.{last_name.lower()}@{random.choice(domains)}"
-
-def generate_address():
-    return f"ул. {random.choice(streets)}, д. {random.randint(1, 100)}, кв. {random.randint(1, 50)}"
-
-def create_persons(num_persons=10):
-    persons = []
-    for _ in range(num_persons):
-        first_name = random.choice(first_names)
-        middle_name = random.choice(middle_names)
-        last_name = random.choice(last_names)
-        address = generate_address()
-        phone = generate_phone()
-        email = generate_email(first_name, last_name)
-        person = Person(
-            first_name=first_name,
-            middle_name=middle_name,
-            last_name=last_name,
-            address=address,
-            phone=phone,
-            email=email
-        )
-        persons.append(person)
-
+def create_products():
     with get_session() as session:
-        session.bulk_save_objects(persons)
-        session.commit()
+        if session.query(Product).count() > 0:
+            print("Товары уже существуют в базе данных.")
+            return
 
-product_names = ["Ноутбук", "Смартфон", "Клавиатура", "Мышь", "Монитор", "Принтер", "Наушники", "Флешка", "Зарядное устройство", "Камера"]
-descriptions = ["Отличное качество", "Надежный и долговечный", "Современный дизайн", "Высокая производительность", "Компактный и удобный"]
+        products = [
+            Product(name="Футболка", price=500.0, weight=0.3, description="Хлопковая футболка"),
+            Product(name="Джинсы", price=2000.0, weight=1.2, description="Классические джинсы"),
+            Product(name="Куртка", price=4000.0, weight=1.5, description="Зимняя куртка"),
+            Product(name="Кроссовки", price=3000.0, weight=1.0, description="Удобные кроссовки"),
+            Product(name="Рубашка", price=1500.0, weight=0.4, description="Классическая рубашка"),
+            Product(name="Платье", price=2500.0, weight=0.8, description="Летнее платье"),
+            Product(name="Шапка", price=800.0, weight=0.2, description="Теплая шапка"),
+            Product(name="Шарф", price=700.0, weight=0.3, description="Уютный шарф"),
+            Product(name="Перчатки", price=600.0, weight=0.2, description="Кожаные перчатки"),
+            Product(name="Ботинки", price=3500.0, weight=1.4, description="Кожаные ботинки"),
+            Product(name="Свитер", price=1800.0, weight=0.6, description="Уютный свитер"),
+            Product(name="Шорты", price=1200.0, weight=0.5, description="Летние шорты"),
+            Product(name="Пальто", price=5000.0, weight=1.8, description="Осеннее пальто"),
+            Product(name="Сандалии", price=1500.0, weight=0.9, description="Летние сандалии"),
+            Product(name="Рюкзак", price=3000.0, weight=1.2, description="Прочный рюкзак"),
+            Product(name="Часы", price=7000.0, weight=0.15, description="Наручные часы"),
+            Product(name="Кошелек", price=1000.0, weight=0.2, description="Кожаный кошелек"),
+            Product(name="Бейсболка", price=800.0, weight=0.25, description="Стильная бейсболка"),
+            Product(name="Пижама", price=2000.0, weight=0.7, description="Удобная пижама"),
+            Product(name="Купальник", price=1200.0, weight=0.3, description="Яркий купальник"),
+            Product(name="Очки", price=2500.0, weight=0.1, description="Солнцезащитные очки"),
+            Product(name="Ремень", price=1000.0, weight=0.4, description="Кожаный ремень"),
+            Product(name="Кепка", price=900.0, weight=0.2, description="Классическая кепка"),
+            Product(name="Носки", price=400.0, weight=0.1, description="Хлопковые носки"),
+            Product(name="Тапочки", price=700.0, weight=0.5, description="Домашние тапочки"),
+            Product(name="Галстук", price=1200.0, weight=0.2, description="Классический галстук"),
+            Product(name="Сумка", price=4000.0, weight=1.3, description="Женская сумка"),
+            Product(name="Блузка", price=1800.0, weight=0.4, description="Шелковая блузка"),
+            Product(name="Юбка", price=2000.0, weight=0.6, description="Короткая юбка"),
+            Product(name="Майка", price=600.0, weight=0.2, description="Спортивная майка"),
+            Product(name="Брюки", price=2500.0, weight=1.0, description="Классические брюки"),
+            Product(name="Кроссовки для бега", price=3500.0, weight=0.9, description="Спортивные кроссовки"),
+            Product(name="Толстовка", price=2200.0, weight=0.8, description="Худи с капюшоном"),
+            Product(name="Жилет", price=3000.0, weight=1.2, description="Теплый жилет"),
+            Product(name="Резиновые сапоги", price=2000.0, weight=1.5, description="Сапоги для дождя"),
+            Product(name="Пончо", price=1500.0, weight=0.9, description="Непромокаемое пончо"),
+            Product(name="Термобелье", price=1800.0, weight=0.4, description="Зимнее термобелье"),
+            Product(name="Шлепанцы", price=700.0, weight=0.3, description="Пляжные шлепанцы"),
+            Product(name="Поясная сумка", price=1200.0, weight=0.5, description="Удобная поясная сумка"),
+            Product(name="Куртка-дождевик", price=2500.0, weight=1.0, description="Легкая куртка-дождевик")
+        ]
 
-def create_products(num_products=10):
-    products = []
-    for _ in range(num_products):
-        name = random.choice(product_names)
-        price = round(random.uniform(100, 5000), 2)
-        weight = round(random.uniform(0.1, 10.0), 2)
-        description = random.choice(descriptions)
-        product = Product(
-            name=name,
-            price=price,
-            weight=weight,
-            description=description
-        )
-        products.append(product)
-
-    with get_session() as session:
         session.bulk_save_objects(products)
         session.commit()
+        print("Товары добавлены в базу данных.")
 
-def create_orders(num_orders=10):
-    orders = []
 
-    with get_session() as session:
-        person_ids = [person.PersonID for person in session.query(Person).all()]
-
-        for _ in range(num_orders):
-            person_id = random.choice(person_ids)
-            order_date = f"{random.randint(2023, 2024)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}"
-            delivery_cost = round(random.uniform(100, 500), 2)
-            payment_type = random.choice(["Наличные", "Карта"])
-            status = random.choice(["Обрабатывается", "Отправлено", "Доставлено"])
-
-            order = Order(
-                PersonID=person_id,
-                order_date=order_date,
-                delivery_cost=delivery_cost,
-                payment_type=payment_type,
-                status=status
-            )
-            orders.append(order)
-
-        session.bulk_save_objects(orders)
-        session.commit()
-
-def create_order_products(num_order_products=10):
-    order_products = []
-
-    with get_session() as session:
-        order_ids = [order.OrderID for order in session.query(Order).all()]
-        product_ids = [product.ProductID for product in session.query(Product).all()]
-
-        existing_combinations = set()
-
-        for _ in range(num_order_products):
-            order_id = random.choice(order_ids)
-            product_id = random.choice(product_ids)
-
-            if (order_id, product_id) in existing_combinations:
-                continue
-
-            quantity = random.randint(1, 5)
-            price = session.get(Product, product_id).price
-
-            order_product = OrderProduct(
-                OrderID=order_id,
-                ProductID=product_id,
-                quantity=quantity,
-                price=price
-            )
-            order_products.append(order_product)
-            existing_combinations.add((order_id, product_id))
-
-        session.bulk_save_objects(order_products)
-        session.commit()
-
-def create_carts(num_carts=10):
-    carts = []
-
-    with get_session() as session:
-        person_ids = [person.PersonID for person in session.query(Person).all()]
-        for _ in range(num_carts):
-            person_id = random.choice(person_ids)
-            cart = Cart(PersonID=person_id)
-            carts.append(cart)
-
-        session.bulk_save_objects(carts)
-        session.commit()
-
-def create_cart_products(num_cart_products=10):
-    cart_products = []
-
-    with get_session() as session:
-        cart_ids = [cart.CartID for cart in session.query(Cart).all()]
-        product_ids = [product.ProductID for product in session.query(Product).all()]
-        existing_combinations = set()
-
-        for _ in range(num_cart_products):
-            cart_id = random.choice(cart_ids)
-            product_id = random.choice(product_ids)
-            if (cart_id, product_id) in existing_combinations:
-                continue
-
-            quantity = random.randint(1, 3)
-            cart_product = CartProduct(
-                CartID=cart_id,
-                ProductID=product_id,
-                quantity=quantity
-            )
-            cart_products.append(cart_product)
-            existing_combinations.add((cart_id, product_id))
-
-        session.bulk_save_objects(cart_products)
-        session.commit()
-
-create_persons()
-create_products()
-create_orders()
-create_order_products()
-create_carts()
-create_cart_products()
-
-# Запуск сервера
 if __name__ == '__main__':
+    create_products()
     app.run(debug=True, host="0.0.0.0", port=5000)

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админка</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+        }
+        .container {
+            padding: 20px;
+        }
+        .products {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .product {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px;
+            background-color: white;
+            width: 30%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .product h2 {
+            margin-top: 0;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0,0,0);
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .toast {
+            visibility: hidden;
+            max-width: 50%;
+            margin: 0 auto;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 5px;
+            padding: 16px;
+            position: fixed;
+            z-index: 1;
+            left: 50%;
+            bottom: 30px;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>Админка</h1>
+    <button class="home-button" onclick="location.href='/'">Вернуться на главную</button>
+</header>
+<div class="container">
+    <button onclick="openModal('create')">Добавить товар</button>
+    <div class="products" id="products">
+        <!-- Products will be dynamically loaded here -->
+    </div>
+</div>
+
+<div id="productModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <form id="productForm">
+            <input type="hidden" id="productId" name="ProductID">
+            <label for="name">Название:</label>
+            <input type="text" id="name" name="name" required><br>
+            <label for="price">Цена:</label>
+            <input type="number" id="price" name="price" required><br>
+            <label for="weight">Вес:</label>
+            <input type="text" id="weight" name="weight" required><br>
+            <label for="description">Описание:</label>
+            <textarea id="description" name="description" required></textarea><br>
+            <button type="submit">Сохранить</button>
+        </form>
+    </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+    document.getElementsByClassName('close')[0].onclick = function() {
+        document.getElementById('productModal').style.display = "none";
+    }
+
+    window.onclick = function(event) {
+        if (event.target == document.getElementById('productModal')) {
+            document.getElementById('productModal').style.display = "none";
+        }
+    }
+
+    async function loadProducts() {
+        const response = await fetch('/products');
+        const products = await response.json();
+        const productsContainer = document.getElementById('products');
+        productsContainer.innerHTML = '';
+        products.forEach(product => {
+            const productDiv = document.createElement('div');
+            productDiv.className = 'product';
+            productDiv.innerHTML = `
+                <h2>${product.name}</h2>
+                <p>${product.description}</p>
+                <p>Цена: ${product.price} руб.</p>
+                <button onclick="openModal('edit', ${product.ProductID})">Редактировать</button>
+                <button onclick="deleteProduct(${product.ProductID})">Удалить</button>
+            `;
+            productsContainer.appendChild(productDiv);
+        });
+    }
+
+    async function openModal(action, productId) {
+        const modal = document.getElementById('productModal');
+        const form = document.getElementById('productForm');
+        form.reset();
+        document.getElementById('productId').value = '';
+        if (action === 'edit') {
+            const response = await fetch(`/products/${productId}`);
+            const product = await response.json();
+            document.getElementById('productId').value = product.ProductID;
+            document.getElementById('name').value = product.name;
+            document.getElementById('price').value = product.price;
+            document.getElementById('weight').value = product.weight;
+            document.getElementById('description').value = product.description;
+        }
+        modal.style.display = "block";
+    }
+
+    async function deleteProduct(productId) {
+        const response = await fetch(`/products/${productId}`, {
+            method: 'DELETE'
+        });
+        if (response.ok) {
+            showToast('Товар удален');
+            loadProducts();
+        } else {
+            showToast('Ошибка удаления товара');
+        }
+    }
+
+    document.getElementById('productForm').onsubmit = async function(event) {
+        event.preventDefault();
+        const form = event.target;
+        const productId = form.ProductID.value;
+        const method = productId ? 'PUT' : 'POST';
+        const url = productId ? `/products/${productId}` : '/products';
+        const response = await fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: form.name.value,
+                price: form.price.value,
+                weight: form.weight.value,
+                description: form.description.value
+            })
+        });
+        if (response.ok) {
+            showToast('Товар сохранен');
+            loadProducts();
+            document.getElementById('productModal').style.display = "none";
+        } else {
+            showToast('Ошибка сохранения товара');
+        }
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    loadProducts();
+</script>
+</body>
+</html>
